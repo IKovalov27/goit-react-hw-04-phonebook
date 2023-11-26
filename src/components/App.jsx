@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { nanoid } from 'nanoid';
 
 import { ContactList } from '../components/ContactList/ContactList';
@@ -8,58 +8,60 @@ import { Filter } from '../components/Filter/Filter';
 
 import css from './App.module.css';
 
-const App = () => {
-  const [contacts, setContacts] = useState(() => {
-    const data = JSON.parse(localStorage.getItem('list-contacts'));
-    if (data) {
-      return [...data];
-    } else {
-      return [
-        { id: nanoid(), name: 'Rosie Simpson', number: '459-12-56' },
-        { id: nanoid(), name: 'Hermione Kline', number: '443-89-12' },
-        { id: nanoid(), name: 'Eden Clements', number: '645-17-79' },
-        { id: nanoid(), name: 'Annie Copeland', number: '227-91-26' },
-      ];
-    }
-  });
+export const App = () => {
+  const [contacts, setContacts] = useState(
+    JSON.parse(localStorage.getItem('contacts')) ?? []
+  );
   const [filter, setFilter] = useState('');
 
   useEffect(() => {
-    localStorage.setItem('list-contacts', JSON.stringify(contacts));
+    localStorage.setItem('contacts', JSON.stringify(contacts));
   }, [contacts]);
 
-  const isNameHas = name => {
-    return contacts.some(contact => contact.name === name);
-  };
+  const formSubmit = (name, number) => {
+    const contact = {
+      id: nanoid(),
+      name,
+      number,
+    };
 
-  const onSubmit = data => {
-    data.id = nanoid();
-    setContacts(prev => [...prev, { ...data }]);
-  };
-
-  const onDelete = id => {
-    const data = contacts.filter(contact => contact.id !== id);
-    setContacts([...data]);
-  };
-
-  const filterContacts = () => {
-    console.log("contacts:", contacts);
-    return contacts.filter(contact =>
-      String(contact.name).toLowerCase().includes(filter.toLowerCase())
+    const enterContact = contacts.find(contact =>
+      contact.name.toLowerCase().includes(name.toLowerCase())
     );
+
+    enterContact
+      ? alert(`${name} is already in contact`)
+      : setContacts([contact, ...contacts]);
+  };
+
+  const onChange = e => {
+    setFilter(e.target.value);
+  };
+
+  const findContacts = () => {
+    return contacts.filter(contact =>
+      contact.name.toLowerCase().includes(filter.toLowerCase())
+    );
+  };
+
+  const deleteContact = id => {
+    setContacts(contacts.filter(contact => contact.id !== id));
+    setFilter('');
   };
 
   return (
     <div className={css.container}>
       <Section title="Phonebook">
-        <ContactForm onSubmit={onSubmit} isNameHas={isNameHas} />
+        <ContactForm onSubmit={formSubmit}/>
       </Section>
 
       <Section title="Contacts">
-        {contacts.length !== 0 && (
-          <Filter filter={filter} onChange={setFilter} />
+        {contacts.length > 0 ? (
+          <Filter filter={filter} onChange={onChange} />
+        ) : (
+          <p>Contact list is empty.</p>
         )}
-        <ContactList contacts={filterContacts()} onDelete={onDelete} />
+        <ContactList contacts={findContacts()} deleteContact={deleteContact} />
       </Section>
     </div>
   );
